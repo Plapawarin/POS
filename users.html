@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จัดการผู้ใช้งาน | Smart POS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, Tahoma, sans-serif; }
+        body { background: #f1f5f9; color: #1e293b; font-size: 14px; }
+
+        .topbar { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 17px; }
+        .brand i { width: 34px; height: 34px; background: #2563eb; color: #fff; border-radius: 10px; display: grid; place-items: center; font-style: normal; }
+        .nav { display: flex; gap: 4px; flex-wrap: wrap; }
+        .nav a { padding: 8px 14px; border-radius: 8px; color: #64748b; text-decoration: none; font-size: 14px; }
+        .nav a.on { background: #eff6ff; color: #2563eb; font-weight: bold; }
+        .user { display: flex; align-items: center; gap: 12px; color: #64748b; font-size: 13px; }
+
+        .btn { border: 1px solid #cbd5e1; background: #fff; padding: 9px 14px; border-radius: 8px; cursor: pointer; font-size: 14px; color: #1e293b; }
+        .btn:hover { background: #f1f5f9; }
+        .btn.pri { background: #2563eb; color: #fff; border-color: #2563eb; font-weight: bold; }
+        .btn.pri:hover { background: #1d4ed8; }
+        .btn.sm { padding: 6px 11px; font-size: 13px; }
+        .btn.del { color: #b91c1c; border-color: #fecaca; }
+        .btn.del:hover { background: #fee2e2; }
+        .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+        .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 10px; flex-wrap: wrap; }
+        h1 { font-size: 20px; }
+        h2 { font-size: 15px; margin-bottom: 12px; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+
+        label { display: block; font-size: 12px; color: #64748b; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fff; color: #1e293b; min-width: 0; }
+        input:focus, select:focus { outline: 2px solid #2563eb; border-color: transparent; }
+        input[readonly] { background: #f1f5f9; }
+        .form { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+        .pass { display: flex; gap: 6px; }
+        .hint { color: #64748b; font-size: 12px; margin-top: 4px; }
+        .actions { display: flex; gap: 8px; }
+
+        .filters { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+        .filters input { flex: 1; min-width: 180px; }
+        .filters select { width: 160px; }
+
+        .tbl { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+        th { color: #64748b; font-size: 12px; }
+        tr.off td:not(:last-child) { color: #94a3b8; }
+        .badge { padding: 2px 10px; border-radius: 99px; font-size: 12px; background: #dcfce7; color: #15803d; }
+        .badge.off { background: #fee2e2; color: #b91c1c; }
+        .badge.mgr { background: #dbeafe; color: #1d4ed8; }
+        .empty { color: #94a3b8; text-align: center; padding: 22px 0; }
+        .error { background: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
+        .done { background: #dcfce7; color: #15803d; padding: 12px; border-radius: 8px; margin-bottom: 14px; line-height: 1.7; }
+        .done code { background: #fff; padding: 2px 8px; border-radius: 6px; font-size: 15px; letter-spacing: 1px; user-select: all; }
+        #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #1e293b; color: #fff; padding: 10px 16px; border-radius: 8px; display: none; z-index: 9; }
+
+        @media (max-width: 760px) { .form { grid-template-columns: 1fr; } .wrap { padding: 14px; } }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <div class="brand"><i>S</i>Smart POS</div>
+        <div class="nav"><a href="dashboard.html">ภาพรวม</a><a href="pos.html">ขายสินค้า</a><a href="sales-history.html">ประวัติการขาย</a><a href="products.html">สินค้า</a><a href="stock.html">สต็อก</a><a href="reports.html">รายงาน</a><a href="users.html" class="on">ผู้ใช้งาน</a></div>
+        <div class="user">
+            <span id="userName">กำลังโหลด...</span>
+            <button class="btn" id="logoutButton">ออกจากระบบ</button>
+        </div>
+    </div>
+
+    <div class="wrap">
+        <div class="head">
+            <h1>จัดการผู้ใช้งาน</h1>
+            <button class="btn pri" id="newBtn">+ เพิ่มพนักงาน</button>
+        </div>
+        <div id="message"></div>
+        <div id="notice"></div>
+
+        <div class="card" id="formCard" hidden>
+            <h2 id="formTitle"></h2>
+            <div class="form">
+                <div data-m="create edit"><label>รหัสพนักงาน *</label><input id="fCode" placeholder="เช่น EMP003"></div>
+                <div data-m="create edit"><label>ชื่อ-นามสกุล *</label><input id="fName"></div>
+                <div data-m="create edit"><label>ตำแหน่ง *</label>
+                    <select id="fRole"><option value="cashier">พนักงานขาย</option><option value="manager">ผู้จัดการ</option></select></div>
+                <div data-m="create edit"><label>เบอร์โทร</label><input id="fPhone" inputmode="tel"></div>
+                <div data-m="create"><label>อีเมล (ไม่บังคับ)</label><input id="fEmail" type="email" placeholder="เว้นว่าง = สร้างให้อัตโนมัติ">
+                    <p class="hint">ใช้เป็นชื่อบัญชีเบื้องหลัง พนักงานล็อกอินด้วยรหัสพนักงานตามเดิม</p></div>
+                <div data-m="create reset"><label id="passLabel">รหัสผ่าน *</label>
+                    <div class="pass"><input id="fPass" type="text" autocomplete="off" placeholder="อย่างน้อย 6 ตัวอักษร"><button class="btn" id="genBtn" type="button">สุ่ม</button></div></div>
+            </div>
+            <div class="actions">
+                <button class="btn pri" id="saveBtn">บันทึก</button>
+                <button class="btn" id="cancelBtn">ยกเลิก</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="filters">
+                <input id="search" placeholder="ค้นหารหัส / ชื่อ / เบอร์โทร">
+                <select id="roleFilter"><option value="">ทุกตำแหน่ง</option><option value="manager">ผู้จัดการ</option><option value="cashier">พนักงานขาย</option></select>
+                <select id="activeFilter"><option value="">ทุกสถานะ</option><option value="1">ใช้งานอยู่</option><option value="0">ปิดการใช้งาน</option></select>
+            </div>
+            <div class="tbl">
+                <table>
+                    <thead><tr><th>รหัสพนักงาน</th><th>ชื่อ-นามสกุล</th><th>ตำแหน่ง</th><th>เบอร์โทร</th><th>สถานะ</th><th></th></tr></thead>
+                    <tbody id="tbody"><tr><td colspan="6" class="empty">กำลังโหลด...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div id="toast"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+
+    <script>
+        const $ = id => document.getElementById(id);
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        function toast(m) { const t = $("toast"); t.textContent = m; t.style.display = "block"; clearTimeout(t.h); t.h = setTimeout(() => t.style.display = "none", 3500); }
+
+        let users = [], meId = null, mode = "create", editId = null;
+
+        // เรียก Edge Function manage-users
+        async function call(body) {
+            const { data, error } = await supabaseClient.functions.invoke("manage-users", { body });
+            if (error) {
+                let msg = error.message;
+                try { const j = await error.context.json(); msg = j.error || msg; } catch { }
+                throw new Error(msg);
+            }
+            if (data && data.error) throw new Error(data.error);
+            return data;
+        }
+
+        function genPassword() {
+            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+            const a = new Uint32Array(8); crypto.getRandomValues(a);
+            return Array.from(a, n => chars[n % chars.length]).join("");
+        }
+
+        // ---------- ตาราง ----------
+        function renderTable() {
+            const q = $("search").value.trim().toLowerCase(), rf = $("roleFilter").value, af = $("activeFilter").value;
+            const list = users.filter(u => (!rf || u.role === rf) && (!af || (u.is_active ? "1" : "0") === af) &&
+                ((u.employee_code || "") + " " + (u.full_name || "") + " " + (u.phone || "")).toLowerCase().includes(q));
+            $("tbody").innerHTML = list.map(u => {
+                const self = u.id === meId;
+                return `<tr class="${u.is_active ? "" : "off"}">
+                    <td>${esc(u.employee_code)}${self ? ' <small style="color:#64748b">(คุณ)</small>' : ""}</td>
+                    <td>${esc(u.full_name)}</td>
+                    <td><span class="badge ${u.role === "manager" ? "mgr" : ""}">${u.role === "manager" ? "ผู้จัดการ" : "พนักงานขาย"}</span></td>
+                    <td>${esc(u.phone || "-")}</td>
+                    <td><span class="badge ${u.is_active ? "" : "off"}">${u.is_active ? "ใช้งานอยู่" : "ปิดการใช้งาน"}</span></td>
+                    <td><button class="btn sm" data-a="edit" data-id="${u.id}">แก้ไข</button>
+                        <button class="btn sm" data-a="reset" data-id="${u.id}">รีเซ็ตรหัสผ่าน</button>
+                        <button class="btn sm ${u.is_active ? "del" : ""}" data-a="toggle" data-id="${u.id}" ${self ? "disabled" : ""}>${u.is_active ? "ปิดใช้งาน" : "เปิดใช้งาน"}</button></td></tr>`;
+            }).join("") || '<tr><td colspan="6" class="empty">ไม่พบพนักงาน</td></tr>';
+            $("tbody").querySelectorAll("button").forEach(b => b.onclick = () => {
+                const u = users.find(x => x.id === b.dataset.id);
+                if (b.dataset.a === "edit") openForm("edit", u);
+                else if (b.dataset.a === "reset") openForm("reset", u);
+                else toggleActive(u);
+            });
+        }
+
+        // ---------- ฟอร์ม ----------
+        function openForm(m, u) {
+            mode = m; editId = u?.id || null; $("notice").innerHTML = "";
+            $("formTitle").textContent = m === "create" ? "เพิ่มพนักงานใหม่" : m === "edit" ? "แก้ไขข้อมูลพนักงาน" : `รีเซ็ตรหัสผ่าน: ${u.full_name} (${u.employee_code})`;
+            $("passLabel").textContent = m === "reset" ? "รหัสผ่านใหม่ *" : "รหัสผ่านเริ่มต้น *";
+            $("fCode").value = u?.employee_code || ""; $("fCode").readOnly = m === "edit";
+            $("fName").value = u?.full_name || ""; $("fRole").value = u?.role || "cashier";
+            $("fRole").disabled = m === "edit" && u.id === meId;
+            $("fPhone").value = u?.phone || ""; $("fEmail").value = "";
+            $("fPass").value = m === "create" || m === "reset" ? genPassword() : "";
+            document.querySelectorAll("#formCard [data-m]").forEach(d => d.hidden = !d.dataset.m.split(" ").includes(m));
+            $("formCard").hidden = false;
+            $("formCard").scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+        function closeForm() { $("formCard").hidden = true; }
+
+        async function save() {
+            $("saveBtn").disabled = true;
+            try {
+                if (mode === "create") {
+                    const code = $("fCode").value.trim().toUpperCase(), pass = $("fPass").value;
+                    await call({ action: "create", employee_code: code, full_name: $("fName").value, role: $("fRole").value,
+                        phone: $("fPhone").value, email: $("fEmail").value, password: pass });
+                    showPassword(`เพิ่มพนักงานแล้ว รหัสพนักงาน <code>${esc(code)}</code>`, pass);
+                } else if (mode === "edit") {
+                    await call({ action: "update", id: editId, full_name: $("fName").value, role: $("fRole").value, phone: $("fPhone").value });
+                    toast("บันทึกแล้ว");
+                } else {
+                    const pass = $("fPass").value, u = users.find(x => x.id === editId);
+                    await call({ action: "reset_password", id: editId, password: pass });
+                    showPassword(`รีเซ็ตรหัสผ่านของ <b>${esc(u.full_name)}</b> แล้ว`, pass);
+                }
+                closeForm(); await load();
+            } catch (e) { toast(e.message); }
+            $("saveBtn").disabled = false;
+        }
+
+        function showPassword(title, pass) {
+            $("notice").innerHTML = `<div class="done">${title}<br>รหัสผ่าน: <code>${esc(pass)}</code><br>
+                <small>แสดงครั้งเดียวเท่านั้น กรุณาแจ้งพนักงาน (ระบบไม่เก็บรหัสผ่านไว้ให้ดูย้อนหลัง)</small></div>`;
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        async function toggleActive(u) {
+            const to = !u.is_active;
+            if (!confirm(to ? `เปิดใช้งาน ${u.full_name} ?` : `ปิดการใช้งาน ${u.full_name} ?\nพนักงานจะล็อกอินไม่ได้ (ประวัติการขายยังอยู่ครบ)`)) return;
+            try { await call({ action: "set_active", id: u.id, is_active: to }); toast(to ? "เปิดใช้งานแล้ว" : "ปิดการใช้งานแล้ว"); await load(); }
+            catch (e) { toast(e.message); }
+        }
+
+        // ---------- โหลดข้อมูล ----------
+        async function load() { users = (await call({ action: "list" })).users; renderTable(); }
+
+        // พนักงานขายเข้าหน้านี้ไม่ได้: แสดงข้อความแจ้งแทนการเด้งกลับเงียบๆ
+        function denyAccess(me) {
+            document.getElementById("userName").textContent = me.full_name + " · " + (me.role === "manager" ? "ผู้จัดการ" : "พนักงานขาย");
+            document.querySelectorAll(".nav a").forEach(a => { if (/products|stock|reports|users/.test(a.getAttribute("href"))) a.style.display = "none"; });
+            document.querySelector(".wrap").innerHTML = `<div class="card" style="text-align:center;padding:40px 20px">
+                <div style="font-size:42px">🔒</div>
+                <h2 style="margin:12px 0 6px;font-size:18px">ไม่มีสิทธิ์เข้าถึงหน้านี้</h2>
+                <p style="color:#64748b;margin-bottom:18px">หน้านี้เข้าถึงได้เฉพาะผู้จัดการเท่านั้น</p>
+                <a class="btn pri" href="pos.html" style="text-decoration:none;display:inline-block">กลับไปหน้าขายสินค้า</a></div>`;
+        }
+
+        async function init() {
+            const { data: auth } = await supabaseClient.auth.getUser();
+            if (!auth.user) { window.location.replace("index.html"); return; }
+            const { data: me } = await supabaseClient.from("profiles").select("id, full_name, role, is_active")
+                .eq("auth_user_id", auth.user.id).maybeSingle();
+            if (!me || !me.is_active) { await supabaseClient.auth.signOut(); window.location.replace("index.html"); return; }
+            if (me.role !== "manager") { denyAccess(me); return; }
+            meId = me.id; $("userName").textContent = me.full_name + " · ผู้จัดการ";
+            await load();
+        }
+
+        $("newBtn").onclick = () => openForm("create");
+        $("cancelBtn").onclick = closeForm;
+        $("saveBtn").onclick = save;
+        $("genBtn").onclick = () => { $("fPass").value = genPassword(); };
+        $("search").oninput = renderTable; $("roleFilter").onchange = renderTable; $("activeFilter").onchange = renderTable;
+        $("logoutButton").onclick = async function () { this.disabled = true; await supabaseClient.auth.signOut(); window.location.replace("index.html"); };
+
+        init().catch(e => { console.error(e); $("message").innerHTML = '<div class="error">โหลดข้อมูลไม่สำเร็จ: ' + esc(e.message || e) + '<br><small>ตรวจว่า deploy Edge Function ชื่อ manage-users แล้ว</small></div>'; });
+    </script>
+</body>
+</html>

@@ -1,0 +1,392 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Smart POS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, Tahoma, sans-serif; }
+        body { background: #f1f5f9; color: #1e293b; font-size: 14px; }
+
+        .topbar {
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 17px; }
+        .brand i {
+            width: 34px; height: 34px; background: #2563eb; color: #fff;
+            border-radius: 10px; display: grid; place-items: center; font-style: normal;
+        }
+
+        .nav { display: flex; gap: 4px; flex-wrap: wrap; }
+        .nav a {
+            padding: 8px 14px; border-radius: 8px; color: #64748b;
+            text-decoration: none; font-size: 14px;
+        }
+        .nav a:hover { background: #f1f5f9; }
+        .nav a.on { background: #eff6ff; color: #2563eb; font-weight: bold; }
+
+        .user { display: flex; align-items: center; gap: 12px; color: #64748b; font-size: 13px; }
+        .btn {
+            border: 1px solid #cbd5e1; background: #fff; padding: 8px 14px;
+            border-radius: 8px; cursor: pointer; font-size: 13px;
+        }
+        .btn:hover { background: #f1f5f9; }
+
+        .wrap { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        h1 { font-size: 20px; margin-bottom: 14px; }
+        h2 { font-size: 15px; margin-bottom: 12px; }
+
+        .grid { display: grid; gap: 14px; }
+        .stats { grid-template-columns: repeat(4, 1fr); margin-bottom: 14px; }
+        .two { grid-template-columns: 1fr 1fr; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; }
+        .stat span { color: #64748b; font-size: 13px; }
+        .stat b { display: block; font-size: 26px; margin-top: 6px; }
+
+        .bars { display: flex; align-items: flex-end; gap: 8px; height: 150px; }
+        .bars div { flex: 1; text-align: center; font-size: 11px; color: #64748b; }
+        .bars u {
+            display: block; background: #2563eb; border-radius: 5px 5px 0 0;
+            margin-bottom: 4px; min-height: 2px;
+        }
+
+        .row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 9px 0; border-bottom: 1px solid #e2e8f0; gap: 8px;
+        }
+        .row:last-child { border-bottom: 0; }
+        .badge {
+            padding: 2px 10px; border-radius: 99px; font-size: 12px;
+            background: #fef3c7; color: #b45309; white-space: nowrap;
+        }
+        .badge.out { background: #fee2e2; color: #b91c1c; }
+        .badge.ok { background: #dcfce7; color: #15803d; }
+
+        .empty { color: #94a3b8; text-align: center; padding: 22px 0; }
+        .tbl { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            text-align: left; padding: 9px 8px;
+            border-bottom: 1px solid #e2e8f0; white-space: nowrap;
+        }
+        th { color: #64748b; font-size: 12px; }
+        .r { text-align: right; }
+        tr.cancelled td { color: #94a3b8; text-decoration: line-through; }
+        tr.cancelled td:last-child { text-decoration: none; }
+        .error { background: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 8px; }
+
+        @media (max-width: 760px) {
+            .stats { grid-template-columns: 1fr 1fr; }
+            .two { grid-template-columns: 1fr; }
+            .wrap { padding: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <div class="brand"><i>S</i>Smart POS</div>
+
+        <div class="nav">
+            <a href="dashboard.html" class="on">ภาพรวม</a>
+            <a href="pos.html">ขายสินค้า</a>
+            <a href="sales-history.html">ประวัติการขาย</a>
+
+            <a href="products.html" id="navProducts" style="display:none">สินค้า</a>
+            <a href="stock.html" id="navStock" style="display:none">สต็อก</a>
+            <a href="reports.html" id="navReports" style="display:none">รายงาน</a>
+            <a href="users.html" id="navUsers" style="display:none">ผู้ใช้งาน</a>
+            <a href="ai.html" id="navAI" style="display:none">วิเคราะห์ยอดขาย AI</a>
+        </div>
+
+        <div class="user">
+            <span id="userName">กำลังโหลด...</span>
+            <button class="btn" id="logoutButton">ออกจากระบบ</button>
+        </div>
+    </div>
+
+    <div class="wrap">
+        <h1>ภาพรวมวันนี้</h1>
+        <div id="message"></div>
+
+        <div class="grid stats">
+            <div class="card stat"><span>ยอดขายวันนี้</span><b id="todaySales">-</b></div>
+            <div class="card stat"><span>จำนวนบิลวันนี้</span><b id="todayBills">-</b></div>
+            <div class="card stat"><span>ยอดขายเดือนนี้</span><b id="monthSales">-</b></div>
+            <div class="card stat"><span>สินค้าใกล้หมด</span><b id="lowCount">-</b></div>
+        </div>
+
+        <div class="grid two">
+            <div class="card">
+                <h2>ยอดขาย 7 วันล่าสุด</h2>
+                <div class="bars" id="chart"></div>
+            </div>
+
+            <div class="card">
+                <h2>สินค้าขายดี (7 วัน)</h2>
+                <div id="topList"></div>
+            </div>
+
+            <div class="card" style="grid-column: 1 / -1;">
+                <h2>รายการขายล่าสุด</h2>
+                <div class="tbl">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>เลขที่บิล</th>
+                                <th>วันที่/เวลา</th>
+                                <th>ชำระโดย</th>
+                                <th class="r">ยอดรวม</th>
+                                <th>สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesBody">
+                            <tr><td colspan="5" class="empty">กำลังโหลด...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card" style="grid-column: 1 / -1;">
+                <h2>แจ้งเตือนสินค้าใกล้หมด</h2>
+                <div id="lowList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+
+    <script>
+        const $ = id => document.getElementById(id);
+        const baht = n => "฿" + Number(n || 0).toLocaleString("th-TH");
+
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        }[c]));
+
+        const dateKey = d => new Date(d).toLocaleDateString("en-CA", {
+            timeZone: "Asia/Bangkok"
+        });
+
+        async function loadDashboard() {
+            // 1) ตรวจสอบ Login
+            const { data: auth, error: authError } = await supabaseClient.auth.getUser();
+
+            if (authError || !auth.user) {
+                window.location.replace("index.html");
+                return;
+            }
+
+            // 2) ดึงข้อมูลพนักงาน
+            const { data: profile, error: pe } = await supabaseClient
+                .from("profiles")
+                .select("full_name, role, is_active")
+                .eq("auth_user_id", auth.user.id)
+                .maybeSingle();
+
+            if (pe || !profile) {
+                $("userName").textContent = "ไม่พบข้อมูลพนักงาน";
+                $("message").innerHTML =
+                    '<div class="error">ไม่สามารถตรวจสอบข้อมูลพนักงานได้</div>';
+                return;
+            }
+
+            if (!profile.is_active) {
+                await supabaseClient.auth.signOut();
+                window.location.replace("index.html");
+                return;
+            }
+
+            const roles = {
+                manager: "ผู้จัดการ",
+                cashier: "พนักงานขาย"
+            };
+
+            $("userName").textContent =
+                profile.full_name + " · " + (roles[profile.role] || profile.role);
+
+            // 3) แสดงเมนูเฉพาะผู้จัดการ
+            if (profile.role === "manager") {
+                $("navProducts").style.display = "";
+                $("navStock").style.display = "";
+                $("navReports").style.display = "";
+                $("navUsers").style.display = "";
+                $("navAI").style.display = "";
+            }
+
+            // 4) โหลดข้อมูลจาก Supabase
+            const today = dateKey(Date.now());
+            const monthStart = today.slice(0, 7) + "-01";
+            const since = new Date(Date.now() - 6 * 864e5);
+            const sinceISO = dateKey(since) + "T00:00:00+07:00";
+
+            const salesFrom =
+                (monthStart < dateKey(since) ? monthStart : dateKey(since))
+                + "T00:00:00+07:00";
+
+            const [salesRes, itemsRes, productsRes, latestRes] = await Promise.all([
+                supabaseClient.from("sales")
+                    .select("id, total_amount, created_at")
+                    .eq("status", "completed")
+                    .gte("created_at", salesFrom),
+
+                supabaseClient.from("sale_items")
+                    .select("product_name, quantity, sales!inner(status, created_at)")
+                    .eq("sales.status", "completed")
+                    .gte("sales.created_at", sinceISO),
+
+                supabaseClient.from("products")
+                    .select("name, stock_quantity, min_stock_level, unit")
+                    .eq("is_active", true),
+
+                supabaseClient.from("sales")
+                    .select("id, receipt_number, total_amount, payment_method, status, created_at")
+                    .order("created_at", { ascending: false })
+                    .limit(10)
+            ]);
+
+            const err = salesRes.error || itemsRes.error ||
+                        productsRes.error || latestRes.error;
+
+            if (err) throw err;
+
+            const sales = salesRes.data || [];
+            const items = itemsRes.data || [];
+            const products = productsRes.data || [];
+
+            // 5) ยอดขายวันนี้
+            const todaySales = sales.filter(s => dateKey(s.created_at) === today);
+
+            $("todaySales").textContent = baht(
+                todaySales.reduce((a, s) => a + Number(s.total_amount), 0)
+            );
+
+            $("todayBills").textContent = todaySales.length;
+
+            // 6) ยอดขายเดือนนี้
+            $("monthSales").textContent = baht(
+                sales.filter(s => dateKey(s.created_at) >= monthStart)
+                    .reduce((a, s) => a + Number(s.total_amount), 0)
+            );
+
+            // 7) ตารางรายการขายล่าสุด
+            const pay = {
+                cash: "เงินสด",
+                transfer: "โอนเงิน"
+            };
+
+            const stt = {
+                completed: ["สำเร็จ", "ok"],
+                cancelled: ["ยกเลิก", "out"]
+            };
+
+            $("salesBody").innerHTML = (latestRes.data || []).map(s => {
+                const st = stt[s.status] || [s.status, ""];
+
+                return `<tr class="${s.status === "cancelled" ? "cancelled" : ""}">
+                    <td>${esc(s.receipt_number)}</td>
+                    <td>${new Date(s.created_at).toLocaleString("th-TH", {
+                        timeZone: "Asia/Bangkok",
+                        dateStyle: "short",
+                        timeStyle: "short"
+                    })}</td>
+                    <td>${esc(pay[s.payment_method] || s.payment_method)}</td>
+                    <td class="r">${baht(s.total_amount)}</td>
+                    <td><span class="badge ${st[1]}">${esc(st[0])}</span></td>
+                </tr>`;
+            }).join("") ||
+            '<tr><td colspan="5" class="empty">ไม่พบรายการขาย</td></tr>';
+
+            // 8) กราฟยอดขาย 7 วันล่าสุด
+            const days = [...Array(7)].map((_, i) =>
+                dateKey(Date.now() - (6 - i) * 864e5)
+            );
+
+            const sums = days.map(d =>
+                sales.filter(s => dateKey(s.created_at) === d)
+                    .reduce((a, s) => a + Number(s.total_amount), 0)
+            );
+
+            const max = Math.max(...sums, 1);
+
+            $("chart").innerHTML = days.map((d, i) =>
+                `<div>
+                    <u style="height:${sums[i] / max * 110}px"
+                       title="${baht(sums[i])}"></u>
+                    ${d.slice(8)}/${d.slice(5, 7)}
+                </div>`
+            ).join("");
+
+            // 9) สินค้าขายดี
+            const byName = {};
+
+            items.forEach(i => {
+                byName[i.product_name] =
+                    (byName[i.product_name] || 0) + Number(i.quantity);
+            });
+
+            const top = Object.entries(byName)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            $("topList").innerHTML = top.map(([n, q]) =>
+                `<div class="row">
+                    <span>${esc(n)}</span>
+                    <b>${q}</b>
+                </div>`
+            ).join("") ||
+            '<div class="empty">ยังไม่มีข้อมูลการขาย</div>';
+
+            // 10) สินค้าใกล้หมด
+            const low = products
+                .filter(p => Number(p.stock_quantity) <= Number(p.min_stock_level))
+                .sort((a, b) => Number(a.stock_quantity) - Number(b.stock_quantity));
+
+            $("lowCount").textContent = low.length;
+
+            $("lowList").innerHTML = low.map(p =>
+                `<div class="row">
+                    <span>${esc(p.name)}
+                        <small style="color:#64748b">
+                            (เหลือ ${esc(p.stock_quantity)} ${esc(p.unit || "")})
+                        </small>
+                    </span>
+                    <span class="badge ${Number(p.stock_quantity) <= 0 ? "out" : ""}">
+                        ${Number(p.stock_quantity) <= 0 ? "หมด" : "ใกล้หมด"}
+                    </span>
+                </div>`
+            ).join("") ||
+            '<div class="empty">สต็อกปกติทุกรายการ</div>';
+        }
+
+        // 11) ออกจากระบบ
+        $("logoutButton").addEventListener("click", async function () {
+            this.disabled = true;
+            await supabaseClient.auth.signOut();
+            window.location.replace("index.html");
+        });
+
+        // 12) เริ่มต้นโหลด Dashboard
+        loadDashboard().catch(e => {
+            console.error(e);
+            $("message").innerHTML =
+                '<div class="error">โหลดข้อมูลไม่สำเร็จ: ' +
+                esc(e.message || e) + '</div>';
+        });
+    </script>
+</body>
+</html>

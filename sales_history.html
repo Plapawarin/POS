@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ประวัติการขาย | Smart POS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, Tahoma, sans-serif; }
+        body { background: #f1f5f9; color: #1e293b; font-size: 14px; }
+
+        .topbar { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 17px; }
+        .brand i { width: 34px; height: 34px; background: #2563eb; color: #fff; border-radius: 10px; display: grid; place-items: center; font-style: normal; }
+        .nav { display: flex; gap: 4px; flex-wrap: wrap; }
+        .nav a { padding: 8px 14px; border-radius: 8px; color: #64748b; text-decoration: none; font-size: 14px; }
+        .nav a.on { background: #eff6ff; color: #2563eb; font-weight: bold; }
+        .user { display: flex; align-items: center; gap: 12px; color: #64748b; font-size: 13px; }
+
+        .btn { border: 1px solid #cbd5e1; background: #fff; padding: 9px 14px; border-radius: 8px; cursor: pointer; font-size: 14px; color: #1e293b; }
+        .btn:hover { background: #f1f5f9; }
+        .btn.pri { background: #2563eb; color: #fff; border-color: #2563eb; font-weight: bold; }
+        .btn.pri:hover { background: #1d4ed8; }
+        .btn.del { color: #b91c1c; border-color: #fecaca; }
+        .btn.del:hover { background: #fee2e2; }
+        .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+        .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        h1 { font-size: 20px; margin-bottom: 14px; }
+        h2 { font-size: 15px; margin-bottom: 12px; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+
+        .range { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+        .chip { border: 1px solid #cbd5e1; background: #fff; padding: 7px 15px; border-radius: 99px; cursor: pointer; font-size: 13px; color: #1e293b; }
+        .chip.on { background: #2563eb; color: #fff; border-color: #2563eb; }
+        input, select { padding: 9px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fff; color: #1e293b; min-width: 0; }
+        input:focus, select:focus { outline: 2px solid #2563eb; border-color: transparent; }
+        #custom { display: none; gap: 6px; align-items: center; }
+        .filters { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+        .filters input { flex: 1; min-width: 180px; }
+
+        .summary { display: flex; gap: 24px; margin-bottom: 12px; color: #64748b; flex-wrap: wrap; }
+        .summary b { color: #1e293b; font-size: 18px; margin-left: 4px; }
+
+        .tbl { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+        th { color: #64748b; font-size: 12px; }
+        .r { text-align: right; }
+        tr.sale { cursor: pointer; }
+        tr.sale:hover td { background: #f8fafc; }
+        tr.cancelled td:not(:last-child) { color: #94a3b8; text-decoration: line-through; }
+        .badge { padding: 2px 10px; border-radius: 99px; font-size: 12px; background: #dcfce7; color: #15803d; }
+        .badge.out { background: #fee2e2; color: #b91c1c; }
+        .empty { color: #94a3b8; text-align: center; padding: 22px 0; }
+        .error { background: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
+
+        #overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, .5); display: none; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto; z-index: 20; }
+        #modal { background: #fff; border-radius: 14px; width: 100%; max-width: 520px; padding: 22px; margin: auto; }
+        #modal h2 { font-size: 17px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .meta { color: #64748b; line-height: 1.8; margin: 8px 0 14px; }
+        .sum { display: flex; justify-content: space-between; padding: 5px 0; }
+        .sum.total { font-size: 18px; font-weight: bold; border-top: 1px solid #e2e8f0; margin-top: 6px; padding-top: 10px; }
+        .warn { background: #fee2e2; color: #b91c1c; padding: 10px; border-radius: 8px; margin-bottom: 12px; }
+        .modal-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+        #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #1e293b; color: #fff; padding: 10px 16px; border-radius: 8px; display: none; z-index: 30; }
+
+        @media (max-width: 760px) { .wrap { padding: 14px; } }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <div class="brand"><i>S</i>Smart POS</div>
+        <div class="nav"><a href="dashboard.html">ภาพรวม</a><a href="pos.html">ขายสินค้า</a><a href="sales-history.html" class="on">ประวัติการขาย</a><a href="products.html" id="navProducts" style="display:none">สินค้า</a><a href="stock.html" id="navStock" style="display:none">สต็อก</a><a href="reports.html" id="navReports" style="display:none">รายงาน</a><a href="users.html" id="navUsers" style="display:none">ผู้ใช้งาน</a></div>
+        <div class="user">
+            <span id="userName">กำลังโหลด...</span>
+            <button class="btn" id="logoutButton">ออกจากระบบ</button>
+        </div>
+    </div>
+
+    <div class="wrap">
+        <h1>ประวัติการขาย</h1>
+        <div id="message"></div>
+
+        <div class="range">
+            <button class="chip on" data-r="today">วันนี้</button>
+            <button class="chip" data-r="7">7 วัน</button>
+            <button class="chip" data-r="30">30 วัน</button>
+            <button class="chip" data-r="month">เดือนนี้</button>
+            <button class="chip" data-r="custom">กำหนดเอง</button>
+            <span id="custom"><input type="date" id="dFrom"> ถึง <input type="date" id="dTo"><button class="btn" id="dGo">ดูข้อมูล</button></span>
+        </div>
+
+        <div class="card">
+            <div class="filters">
+                <input id="search" placeholder="ค้นหาเลขที่บิล">
+                <select id="statusFilter"><option value="">ทุกสถานะ</option><option value="completed">สำเร็จ</option><option value="cancelled">ยกเลิก</option></select>
+                <select id="payFilter"><option value="">ทุกช่องทางชำระ</option><option value="cash">เงินสด</option><option value="transfer">โอนเงิน</option></select>
+                <select id="cashierFilter" hidden><option value="">พนักงานทุกคน</option></select>
+            </div>
+            <div class="summary"><span>จำนวนบิล<b id="sCount">-</b></span><span>ยอดขายรวม (ไม่นับบิลยกเลิก)<b id="sTotal">-</b></span></div>
+            <div class="tbl">
+                <table>
+                    <thead><tr><th>เลขที่บิล</th><th>วันที่/เวลา</th><th>พนักงานขาย</th><th>ชำระโดย</th><th class="r">ยอดรวม</th><th>สถานะ</th></tr></thead>
+                    <tbody id="tbody"><tr><td colspan="6" class="empty">กำลังโหลด...</td></tr></tbody>
+                </table>
+            </div>
+            <div style="text-align:center;margin-top:12px"><button class="btn" id="moreBtn" hidden>แสดงเพิ่ม</button></div>
+        </div>
+    </div>
+
+    <div id="overlay"><div id="modal"></div></div>
+    <div id="toast"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+
+    <script>
+        const $ = id => document.getElementById(id);
+        const baht = n => "฿" + Number(n || 0).toLocaleString("th-TH", { maximumFractionDigits: 2 });
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        const dkey = ms => new Date(ms).toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
+        const nextDay = d => dkey(new Date(d + "T12:00:00+07:00").getTime() + 864e5);
+        const fmt = d => new Date(d).toLocaleString("th-TH", { timeZone: "Asia/Bangkok", dateStyle: "short", timeStyle: "short" });
+        const PAY = { cash: "เงินสด", transfer: "โอนเงิน" };
+        function toast(m) { const t = $("toast"); t.textContent = m; t.style.display = "block"; clearTimeout(t.h); t.h = setTimeout(() => t.style.display = "none", 3500); }
+
+        let me = null, names = {}, sales = [], from = "", to = "", shown = 50;
+        const isManager = () => me.role === "manager";
+        const who = id => names[id] || "-";
+
+        // ---------- ช่วงเวลา ----------
+        function setRange(r) {
+            const today = dkey(Date.now());
+            if (r === "today") { from = to = today; }
+            else if (r === "7") { from = dkey(Date.now() - 6 * 864e5); to = today; }
+            else if (r === "30") { from = dkey(Date.now() - 29 * 864e5); to = today; }
+            else if (r === "month") { from = today.slice(0, 7) + "-01"; to = today; }
+            document.querySelectorAll(".range .chip").forEach(b => b.classList.toggle("on", b.dataset.r === r));
+            $("custom").style.display = r === "custom" ? "flex" : "none";
+            if (r !== "custom") load().catch(showErr);
+        }
+
+        async function load() {
+            if (!from || !to || from > to) return $("message").innerHTML = '<div class="error">ช่วงวันที่ไม่ถูกต้อง</div>';
+            $("message").innerHTML = "";
+            let q = supabaseClient.from("sales")
+                .select("id, receipt_number, cashier_id, subtotal, discount_amount, tax_amount, total_amount, payment_method, amount_received, change_amount, status, created_at, cancelled_at")
+                .gte("created_at", from + "T00:00:00+07:00").lt("created_at", nextDay(to) + "T00:00:00+07:00")
+                .order("created_at", { ascending: false }).limit(1000);
+            if (!isManager()) q = q.eq("cashier_id", me.id);   // พนักงานขายเห็นเฉพาะบิลของตัวเอง
+            const { data, error } = await q;
+            if (error) throw error;
+            sales = data; shown = 50;
+            if (isManager()) fillCashiers();
+            render();
+        }
+
+        function fillCashiers() {
+            const keep = $("cashierFilter").value;
+            const ids = [...new Set(sales.map(s => s.cashier_id).filter(Boolean))];
+            $("cashierFilter").innerHTML = '<option value="">พนักงานทุกคน</option>' + ids.map(id => `<option value="${id}">${esc(who(id))}</option>`).join("");
+            $("cashierFilter").value = keep; $("cashierFilter").hidden = false;
+        }
+
+        function filtered() {
+            const q = $("search").value.trim().toLowerCase(), st = $("statusFilter").value, pm = $("payFilter").value, cf = $("cashierFilter").value;
+            return sales.filter(x => (!st || x.status === st) && (!pm || x.payment_method === pm) && (!cf || x.cashier_id === cf) &&
+                (x.receipt_number || "").toLowerCase().includes(q));
+        }
+
+        function render() {
+            const list = filtered();
+            $("sCount").textContent = list.length;
+            $("sTotal").textContent = baht(list.filter(x => x.status === "completed").reduce((a, x) => a + Number(x.total_amount), 0));
+            $("tbody").innerHTML = list.slice(0, shown).map(x => `<tr class="sale ${x.status === "cancelled" ? "cancelled" : ""}" data-id="${x.id}">
+                <td>${esc(x.receipt_number)}</td><td>${fmt(x.created_at)}</td><td>${esc(who(x.cashier_id))}</td>
+                <td>${esc(PAY[x.payment_method] || x.payment_method)}</td><td class="r">${baht(x.total_amount)}</td>
+                <td><span class="badge ${x.status === "cancelled" ? "out" : ""}">${x.status === "cancelled" ? "ยกเลิก" : "สำเร็จ"}</span></td></tr>`).join("")
+                || '<tr><td colspan="6" class="empty">ไม่พบรายการขาย</td></tr>';
+            $("tbody").querySelectorAll("tr.sale").forEach(tr => tr.onclick = () => openBill(tr.dataset.id));
+            $("moreBtn").hidden = list.length <= shown;
+        }
+
+        // ---------- รายละเอียดบิล ----------
+        let current = null, currentItems = [];
+
+        async function openBill(id) {
+            current = sales.find(s => s.id === id); currentItems = [];
+            $("modal").innerHTML = "กำลังโหลด..."; $("overlay").style.display = "flex";
+            const { data, error } = await supabaseClient.from("sale_items")
+                .select("product_name, barcode, quantity, unit_price, discount_amount, line_total").eq("sale_id", id);
+            if (error) { $("modal").innerHTML = `<div class="warn">โหลดรายการไม่ได้: ${esc(error.message)}</div><button class="btn" onclick="closeBill()">ปิด</button>`; return; }
+            currentItems = data; renderBill();
+        }
+
+        function renderBill() {
+            const x = current, cancelled = x.status === "cancelled";
+            $("modal").innerHTML = `
+                <h2>บิล ${esc(x.receipt_number)} <span class="badge ${cancelled ? "out" : ""}">${cancelled ? "ยกเลิก" : "สำเร็จ"}</span></h2>
+                <div class="meta">${fmt(x.created_at)} · พนักงานขาย: ${esc(who(x.cashier_id))}<br>ชำระโดย: ${esc(PAY[x.payment_method] || x.payment_method)}</div>
+                ${cancelled ? `<div class="warn">บิลนี้ถูกยกเลิก${x.cancelled_at ? "เมื่อ " + fmt(x.cancelled_at) : ""} (สินค้าถูกคืนเข้าสต็อกแล้ว)</div>` : ""}
+                <div class="tbl"><table><thead><tr><th>สินค้า</th><th class="r">จำนวน</th><th class="r">ราคา</th><th class="r">รวม</th></tr></thead><tbody>
+                ${currentItems.map(i => `<tr><td style="white-space:normal">${esc(i.product_name)}</td><td class="r">${i.quantity}</td><td class="r">${baht(i.unit_price)}</td><td class="r">${baht(i.line_total)}</td></tr>`).join("")}
+                </tbody></table></div>
+                <div style="margin-top:10px">
+                    <div class="sum"><span>รวมก่อนลด</span><span>${baht(x.subtotal)}</span></div>
+                    ${Number(x.discount_amount) ? `<div class="sum"><span>ส่วนลด</span><span>-${baht(x.discount_amount)}</span></div>` : ""}
+                    <div class="sum total"><span>ยอดสุทธิ</span><span>${baht(x.total_amount)}</span></div>
+                    <div class="sum"><span>รับเงิน</span><span>${baht(x.amount_received)}</span></div>
+                    <div class="sum"><span>เงินทอน</span><span>${baht(x.change_amount)}</span></div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn pri" id="printBtn">🖨 พิมพ์ใบเสร็จ</button>
+                    ${isManager() && !cancelled ? '<button class="btn del" id="cancelBtn">ยกเลิกบิลนี้ (คืนสต็อก)</button>' : ""}
+                    <button class="btn" id="closeBtn" style="margin-left:auto">ปิด</button>
+                </div>`;
+            $("printBtn").onclick = printReceipt; $("closeBtn").onclick = closeBill;
+            if ($("cancelBtn")) $("cancelBtn").onclick = cancelBill;
+        }
+        function closeBill() { $("overlay").style.display = "none"; current = null; }
+
+        async function cancelBill() {
+            const x = current;
+            const reason = prompt(`ยืนยันยกเลิกบิล ${x.receipt_number} ยอด ${baht(x.total_amount)} ?\nสินค้าในบิลจะถูกคืนเข้าสต็อก\n\nใส่เหตุผล (ไม่บังคับ) แล้วกดตกลง`, "");
+            if (reason === null) return;
+            $("cancelBtn").disabled = true;
+            const { error } = await supabaseClient.rpc("cancel_sale", { p_sale: x.id, p_reason: reason.trim() || null });
+            if (error) { $("cancelBtn").disabled = false; return toast("ยกเลิกบิลไม่สำเร็จ: " + error.message); }
+            closeBill(); toast("ยกเลิกบิลแล้ว"); await load();
+        }
+
+        // ---------- พิมพ์ใบเสร็จ ----------
+        function printReceipt() {
+            const x = current, cancelled = x.status === "cancelled";
+            const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${esc(x.receipt_number)}</title><style>
+                @page { margin: 6mm; }
+                body { font-family: Tahoma, Arial, sans-serif; font-size: 12px; width: 72mm; margin: 0 auto; color: #000; }
+                h3 { text-align: center; font-size: 16px; } .c { text-align: center; }
+                table { width: 100%; border-collapse: collapse; } td { padding: 2px 0; vertical-align: top; } .r { text-align: right; }
+                hr { border: 0; border-top: 1px dashed #000; margin: 6px 0; } .b { font-weight: bold; font-size: 14px; }
+                </style></head><body>
+                <h3>Smart POS</h3><div class="c">ใบเสร็จรับเงิน</div>
+                ${cancelled ? '<div class="c b">** ยกเลิกแล้ว **</div>' : ""}<hr>
+                <div>เลขที่: ${esc(x.receipt_number)}</div><div>วันที่: ${fmt(x.created_at)}</div><div>พนักงาน: ${esc(who(x.cashier_id))}</div><hr>
+                <table>${currentItems.map(i => `<tr><td colspan="2">${esc(i.product_name)}</td></tr>
+                    <tr><td>&nbsp;&nbsp;${i.quantity} × ${baht(i.unit_price)}</td><td class="r">${baht(i.line_total)}</td></tr>`).join("")}</table><hr>
+                <table>
+                    ${Number(x.discount_amount) ? `<tr><td>ส่วนลด</td><td class="r">-${baht(x.discount_amount)}</td></tr>` : ""}
+                    <tr class="b"><td>ยอดสุทธิ</td><td class="r">${baht(x.total_amount)}</td></tr>
+                    <tr><td>ชำระโดย ${esc(PAY[x.payment_method] || x.payment_method)}</td><td class="r"></td></tr>
+                    <tr><td>รับเงิน</td><td class="r">${baht(x.amount_received)}</td></tr>
+                    <tr><td>เงินทอน</td><td class="r">${baht(x.change_amount)}</td></tr></table><hr>
+                <div class="c">ขอบคุณที่ใช้บริการ</div></body></html>`;
+            const f = document.createElement("iframe");
+            f.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
+            document.body.appendChild(f);
+            f.contentDocument.open(); f.contentDocument.write(html); f.contentDocument.close();
+            setTimeout(() => { f.contentWindow.focus(); f.contentWindow.print(); setTimeout(() => f.remove(), 1500); }, 300);
+        }
+
+        // ---------- เริ่มต้น ----------
+        async function loadNames() {
+            if (!isManager()) { names[me.id] = me.full_name; return; }
+            try {   // ผู้จัดการดึงรายชื่อพนักงานทั้งหมดผ่าน Edge Function manage-users
+                const { data } = await supabaseClient.functions.invoke("manage-users", { body: { action: "list" } });
+                (data?.users || []).forEach(u => names[u.id] = u.full_name);
+            } catch { }
+            names[me.id] = names[me.id] || me.full_name;
+        }
+
+        async function init() {
+            const { data: auth } = await supabaseClient.auth.getUser();
+            if (!auth.user) { window.location.replace("index.html"); return; }
+            const { data } = await supabaseClient.from("profiles").select("id, full_name, role, is_active")
+                .eq("auth_user_id", auth.user.id).maybeSingle();
+            if (!data || !data.is_active) { await supabaseClient.auth.signOut(); window.location.replace("index.html"); return; }
+            me = data;
+            $("userName").textContent = me.full_name + " · " + (isManager() ? "ผู้จัดการ" : "พนักงานขาย");
+            if (isManager()) ["navProducts", "navStock", "navReports", "navUsers"].forEach(id => $(id).style.display = "");
+            $("dFrom").value = $("dTo").value = dkey(Date.now());
+            await loadNames();
+            setRange("today");
+        }
+
+        document.querySelectorAll(".range .chip").forEach(b => b.onclick = () => setRange(b.dataset.r));
+        $("dGo").onclick = () => { from = $("dFrom").value; to = $("dTo").value; load().catch(showErr); };
+        $("search").oninput = () => { shown = 50; render(); };
+        ["statusFilter", "payFilter", "cashierFilter"].forEach(id => $(id).onchange = () => { shown = 50; render(); });
+        $("moreBtn").onclick = () => { shown += 50; render(); };
+        $("overlay").onclick = e => { if (e.target === $("overlay")) closeBill(); };
+        $("logoutButton").onclick = async function () { this.disabled = true; await supabaseClient.auth.signOut(); window.location.replace("index.html"); };
+
+        const showErr = e => { console.error(e); $("message").innerHTML = '<div class="error">โหลดข้อมูลไม่สำเร็จ: ' + esc(e.message || e) + '</div>'; };
+        init().catch(showErr);
+    </script>
+</body>
+</html>

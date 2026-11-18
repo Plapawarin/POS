@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายงาน | Smart POS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, Tahoma, sans-serif; }
+        body { background: #f1f5f9; color: #1e293b; font-size: 14px; }
+
+        .topbar { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 17px; }
+        .brand i { width: 34px; height: 34px; background: #2563eb; color: #fff; border-radius: 10px; display: grid; place-items: center; font-style: normal; }
+        .nav { display: flex; gap: 4px; flex-wrap: wrap; }
+        .nav a { padding: 8px 14px; border-radius: 8px; color: #64748b; text-decoration: none; font-size: 14px; }
+        .nav a.on { background: #eff6ff; color: #2563eb; font-weight: bold; }
+        .user { display: flex; align-items: center; gap: 12px; color: #64748b; font-size: 13px; }
+
+        .btn { border: 1px solid #cbd5e1; background: #fff; padding: 9px 14px; border-radius: 8px; cursor: pointer; font-size: 14px; color: #1e293b; }
+        .btn:hover { background: #f1f5f9; }
+
+        .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        h1 { font-size: 20px; margin-bottom: 14px; }
+        h2 { font-size: 15px; margin-bottom: 12px; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; }
+        .grid { display: grid; gap: 14px; margin-bottom: 14px; }
+        .g4 { grid-template-columns: repeat(4, 1fr); }
+        .g2 { grid-template-columns: 1fr 1fr; }
+        .stat span { color: #64748b; font-size: 13px; }
+        .stat b { display: block; font-size: 24px; margin-top: 6px; }
+        .stat small { color: #64748b; font-size: 12px; }
+
+        .range { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+        .chip { border: 1px solid #cbd5e1; background: #fff; padding: 7px 15px; border-radius: 99px; cursor: pointer; font-size: 13px; color: #1e293b; }
+        .chip.on { background: #2563eb; color: #fff; border-color: #2563eb; }
+        input, select { padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fff; color: #1e293b; }
+        input:focus, select:focus { outline: 2px solid #2563eb; border-color: transparent; }
+        #custom { display: none; gap: 6px; align-items: center; }
+
+        .chart { overflow-x: auto; }
+        .bars { display: flex; align-items: flex-end; gap: 6px; height: 170px; min-width: 100%; }
+        .bars div { flex: 1; min-width: 28px; text-align: center; font-size: 11px; color: #64748b; }
+        .bars u { display: block; background: #2563eb; border-radius: 5px 5px 0 0; margin-bottom: 4px; min-height: 2px; }
+
+        .meter { margin-bottom: 12px; }
+        .meter .top { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .meter .bg { height: 8px; background: #e2e8f0; border-radius: 4px; }
+        .meter .fg { height: 8px; background: #2563eb; border-radius: 4px; }
+
+        .tbl { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+        th { color: #64748b; font-size: 12px; }
+        .r { text-align: right; }
+        tr.sale { cursor: pointer; }
+        tr.sale:hover td { background: #f8fafc; }
+        tr.cancelled td:not(:last-child) { color: #94a3b8; text-decoration: line-through; }
+        tr.detail td { background: #f8fafc; white-space: normal; }
+        .badge { padding: 2px 10px; border-radius: 99px; font-size: 12px; background: #dcfce7; color: #15803d; }
+        .badge.out { background: #fee2e2; color: #b91c1c; }
+        .btn.del { color: #b91c1c; border-color: #fecaca; }
+        .btn.del:hover { background: #fee2e2; }
+        .filters { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+        .filters input { flex: 1; min-width: 180px; }
+        .empty { color: #94a3b8; text-align: center; padding: 22px 0; }
+        .error { background: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
+
+        @media (max-width: 760px) { .g4 { grid-template-columns: 1fr 1fr; } .g2 { grid-template-columns: 1fr; } .wrap { padding: 14px; } }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <div class="brand"><i>S</i>Smart POS</div>
+        <div class="nav"><a href="dashboard.html">ภาพรวม</a><a href="pos.html">ขายสินค้า</a><a href="sales-history.html">ประวัติการขาย</a><a href="products.html">สินค้า</a><a href="stock.html">สต็อก</a><a href="reports.html" class="on">รายงาน</a><a href="users.html">ผู้ใช้งาน</a></div>
+        <div class="user">
+            <span id="userName">กำลังโหลด...</span>
+            <button class="btn" id="logoutButton">ออกจากระบบ</button>
+        </div>
+    </div>
+
+    <div class="wrap">
+        <h1>รายงานยอดขาย</h1>
+        <div id="message"></div>
+
+        <div class="range">
+            <button class="chip on" data-r="today">วันนี้</button>
+            <button class="chip" data-r="7">7 วัน</button>
+            <button class="chip" data-r="30">30 วัน</button>
+            <button class="chip" data-r="month">เดือนนี้</button>
+            <button class="chip" data-r="custom">กำหนดเอง</button>
+            <span id="custom"><input type="date" id="dFrom"> ถึง <input type="date" id="dTo"><button class="btn" id="dGo">ดูรายงาน</button></span>
+        </div>
+
+        <div class="grid g4">
+            <div class="card stat"><span>ยอดขายรวม</span><b id="sTotal">-</b><small id="sRange"></small></div>
+            <div class="card stat"><span>จำนวนบิล</span><b id="sBills">-</b><small id="sAvg"></small></div>
+            <div class="card stat"><span>กำไรขั้นต้น</span><b id="sProfit">-</b><small>ยอดขาย − ต้นทุนสินค้า</small></div>
+            <div class="card stat"><span>บิลที่ยกเลิก</span><b id="sCancel">-</b><small id="sCancelAmt"></small></div>
+        </div>
+
+        <div class="card" style="margin-bottom:14px">
+            <h2>ยอดขายรายวัน</h2>
+            <div class="chart"><div class="bars" id="chart"></div></div>
+        </div>
+
+        <div class="grid g2">
+            <div class="card">
+                <h2>ช่องทางชำระเงิน</h2>
+                <div id="payList"></div>
+            </div>
+            <div class="card">
+                <h2>สินค้าขายดี</h2>
+                <div style="display:flex;gap:6px;margin-bottom:10px">
+                    <button class="chip on" data-s="qty">ตามจำนวน</button>
+                    <button class="chip" data-s="rev">ตามยอดเงิน</button>
+                </div>
+                <div id="topList"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>ประวัติการขาย <small style="color:#64748b;font-weight:normal">(คลิกที่บิลเพื่อดูรายการสินค้า)</small></h2>
+            <div class="filters">
+                <input id="search" placeholder="ค้นหาเลขที่บิล">
+                <select id="statusFilter">
+                    <option value="">ทุกสถานะ</option><option value="completed">สำเร็จ</option><option value="cancelled">ยกเลิก</option>
+                </select>
+            </div>
+            <div class="tbl">
+                <table>
+                    <thead><tr><th>เลขที่บิล</th><th>วันที่/เวลา</th><th>ชำระโดย</th><th class="r">ยอดรวม</th><th>สถานะ</th></tr></thead>
+                    <tbody id="tbody"><tr><td colspan="5" class="empty">กำลังโหลด...</td></tr></tbody>
+                </table>
+            </div>
+            <div style="text-align:center;margin-top:12px"><button class="btn" id="moreBtn" hidden>แสดงเพิ่ม</button></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+
+    <script>
+        const $ = id => document.getElementById(id);
+        const baht = n => "฿" + Number(n || 0).toLocaleString("th-TH", { maximumFractionDigits: 0 });
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        const dkey = ms => new Date(ms).toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
+        const startISO = d => d + "T00:00:00+07:00";
+        const nextDay = d => dkey(new Date(d + "T12:00:00+07:00").getTime() + 864e5);
+        const PAY = { cash: "เงินสด", transfer: "โอนเงิน" };
+
+        let range = "today", from = "", to = "", sales = [], items = [], sortBy = "qty", shown = 50;
+
+        function setRange(r) {
+            range = r;
+            const today = dkey(Date.now());
+            if (r === "today") { from = to = today; }
+            else if (r === "7") { from = dkey(Date.now() - 6 * 864e5); to = today; }
+            else if (r === "30") { from = dkey(Date.now() - 29 * 864e5); to = today; }
+            else if (r === "month") { from = today.slice(0, 7) + "-01"; to = today; }
+            document.querySelectorAll(".range .chip").forEach(b => b.classList.toggle("on", b.dataset.r === r));
+            $("custom").style.display = r === "custom" ? "flex" : "none";
+            if (r !== "custom") load();
+        }
+
+        async function load() {
+            if (!from || !to || from > to) return $("message").innerHTML = '<div class="error">ช่วงวันที่ไม่ถูกต้อง</div>';
+            if ((new Date(to) - new Date(from)) / 864e5 > 92) return $("message").innerHTML = '<div class="error">เลือกช่วงได้ไม่เกิน 92 วัน</div>';
+            $("message").innerHTML = "";
+            const fromISO = startISO(from), toISO = startISO(nextDay(to));
+            const [s, i] = await Promise.all([
+                supabaseClient.from("sales").select("id, receipt_number, total_amount, payment_method, status, created_at, amount_received, change_amount, cancelled_at")
+                    .gte("created_at", fromISO).lt("created_at", toISO).order("created_at", { ascending: false }).limit(1000),
+                supabaseClient.from("sale_items").select("product_name, quantity, unit_cost, line_total, sales!inner(status, created_at)")
+                    .eq("sales.status", "completed").gte("sales.created_at", fromISO).lt("sales.created_at", toISO).limit(1000)
+            ]);
+            if (s.error || i.error) throw (s.error || i.error);
+            sales = s.data; items = i.data; shown = 50;
+            render();
+        }
+
+        function render() {
+            const done = sales.filter(x => x.status === "completed"), canc = sales.filter(x => x.status === "cancelled");
+            const total = done.reduce((a, x) => a + Number(x.total_amount), 0);
+            const profit = items.reduce((a, x) => a + Number(x.line_total) - Number(x.unit_cost || 0) * Number(x.quantity), 0);
+            $("sTotal").textContent = baht(total);
+            $("sRange").textContent = from === to ? from : from + " ถึง " + to;
+            $("sBills").textContent = done.length;
+            $("sAvg").textContent = done.length ? "เฉลี่ย " + baht(total / done.length) + " ต่อบิล" : "";
+            $("sProfit").textContent = baht(profit);
+            $("sCancel").textContent = canc.length;
+            $("sCancelAmt").textContent = canc.length ? "มูลค่า " + baht(canc.reduce((a, x) => a + Number(x.total_amount), 0)) : "";
+
+            // กราฟรายวัน
+            const days = []; for (let d = from; d <= to; d = nextDay(d)) days.push(d);
+            const sums = days.map(d => done.filter(x => dkey(x.created_at) === d).reduce((a, x) => a + Number(x.total_amount), 0));
+            const max = Math.max(...sums, 1);
+            $("chart").innerHTML = days.map((d, i) => `<div><u style="height:${sums[i] / max * 130}px" title="${baht(sums[i])}"></u>${d.slice(8)}/${d.slice(5, 7)}</div>`).join("");
+
+            // ช่องทางชำระเงิน
+            const byPay = {}; done.forEach(x => byPay[x.payment_method] = (byPay[x.payment_method] || 0) + Number(x.total_amount));
+            $("payList").innerHTML = Object.entries(byPay).map(([m, v]) =>
+                `<div class="meter"><div class="top"><span>${esc(PAY[m] || m)}</span><b>${baht(v)} (${(v / total * 100).toFixed(0)}%)</b></div><div class="bg"><div class="fg" style="width:${v / total * 100}%"></div></div></div>`).join("")
+                || '<div class="empty">ไม่มีข้อมูล</div>';
+
+            renderTop(); renderHistory();
+        }
+
+        function renderTop() {
+            const by = {}; items.forEach(x => { const o = by[x.product_name] ||= { q: 0, r: 0 }; o.q += Number(x.quantity); o.r += Number(x.line_total); });
+            const k = sortBy === "qty" ? "q" : "r";
+            const top = Object.entries(by).sort((a, b) => b[1][k] - a[1][k]).slice(0, 10), mx = top[0]?.[1][k] || 1;
+            $("topList").innerHTML = top.map(([n, o]) =>
+                `<div class="meter"><div class="top"><span>${esc(n)}</span><b>${o.q} ชิ้น · ${baht(o.r)}</b></div><div class="bg"><div class="fg" style="width:${o[k] / mx * 100}%"></div></div></div>`).join("")
+                || '<div class="empty">ไม่มีข้อมูล</div>';
+        }
+
+        function renderHistory() {
+            const q = $("search").value.trim().toLowerCase(), st = $("statusFilter").value;
+            const list = sales.filter(x => (!st || x.status === st) && (x.receipt_number || "").toLowerCase().includes(q));
+            $("tbody").innerHTML = list.slice(0, shown).map(x => `<tr class="sale ${x.status === "cancelled" ? "cancelled" : ""}" data-id="${x.id}">
+                <td>${esc(x.receipt_number)}</td>
+                <td>${new Date(x.created_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok", dateStyle: "short", timeStyle: "short" })}</td>
+                <td>${esc(PAY[x.payment_method] || x.payment_method)}</td><td class="r">${baht(x.total_amount)}</td>
+                <td><span class="badge ${x.status === "cancelled" ? "out" : ""}">${x.status === "cancelled" ? "ยกเลิก" : "สำเร็จ"}</span></td></tr>`).join("")
+                || '<tr><td colspan="5" class="empty">ไม่พบรายการขาย</td></tr>';
+            $("tbody").querySelectorAll("tr.sale").forEach(tr => tr.onclick = () => toggleDetail(tr));
+            $("moreBtn").hidden = list.length <= shown;
+        }
+
+        async function toggleDetail(tr) {
+            const next = tr.nextElementSibling;
+            if (next && next.classList.contains("detail")) { next.remove(); return; }
+            const x = sales.find(s => s.id === tr.dataset.id);
+            const row = document.createElement("tr"); row.className = "detail";
+            row.innerHTML = '<td colspan="5">กำลังโหลด...</td>'; tr.after(row);
+            const { data, error } = await supabaseClient.from("sale_items")
+                .select("product_name, quantity, unit_price, line_total").eq("sale_id", x.id);
+            row.firstChild.innerHTML = error ? "โหลดรายการไม่ได้: " + esc(error.message) :
+                data.map(i => `${esc(i.product_name)} × ${i.quantity} <span style="color:#64748b">@${baht(i.unit_price)}</span> = <b>${baht(i.line_total)}</b>`).join("<br>") +
+                `<div style="margin-top:6px;color:#64748b">รับเงิน ${baht(x.amount_received)} · เงินทอน ${baht(x.change_amount)}</div>` +
+                (x.status === "completed"
+                    ? '<div style="margin-top:10px"><button class="btn del" id="cancelSale">ยกเลิกบิลนี้ (คืนสต็อก)</button></div>'
+                    : x.cancelled_at ? `<div style="margin-top:8px;color:#b91c1c">ยกเลิกเมื่อ ${new Date(x.cancelled_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok", dateStyle: "short", timeStyle: "short" })}</div>` : "");
+            const cb = row.querySelector("#cancelSale");
+            if (cb) cb.onclick = () => cancelSale(x, cb);
+        }
+
+        async function cancelSale(x, btn) {
+            const reason = prompt(`ยืนยันยกเลิกบิล ${x.receipt_number} ยอด ${baht(x.total_amount)} ?\nสินค้าในบิลจะถูกคืนเข้าสต็อก\n\nใส่เหตุผล (ไม่บังคับ) แล้วกดตกลง`, "");
+            if (reason === null) return;
+            btn.disabled = true;
+            const { error } = await supabaseClient.rpc("cancel_sale", { p_sale: x.id, p_reason: reason.trim() || null });
+            if (error) { btn.disabled = false; alert("ยกเลิกบิลไม่สำเร็จ: " + error.message); return; }
+            await load();
+        }
+
+        // พนักงานขายเข้าหน้านี้ไม่ได้: แสดงข้อความแจ้งแทนการเด้งกลับเงียบๆ
+        function denyAccess(me) {
+            document.getElementById("userName").textContent = me.full_name + " · " + (me.role === "manager" ? "ผู้จัดการ" : "พนักงานขาย");
+            document.querySelectorAll(".nav a").forEach(a => { if (/products|stock|reports|users/.test(a.getAttribute("href"))) a.style.display = "none"; });
+            document.querySelector(".wrap").innerHTML = `<div class="card" style="text-align:center;padding:40px 20px">
+                <div style="font-size:42px">🔒</div>
+                <h2 style="margin:12px 0 6px;font-size:18px">ไม่มีสิทธิ์เข้าถึงหน้านี้</h2>
+                <p style="color:#64748b;margin-bottom:18px">หน้านี้เข้าถึงได้เฉพาะผู้จัดการเท่านั้น</p>
+                <a class="btn pri" href="pos.html" style="text-decoration:none;display:inline-block">กลับไปหน้าขายสินค้า</a></div>`;
+        }
+
+        async function init() {
+            const { data: auth } = await supabaseClient.auth.getUser();
+            if (!auth.user) { window.location.replace("index.html"); return; }
+            const { data: me } = await supabaseClient.from("profiles").select("full_name, role, is_active")
+                .eq("auth_user_id", auth.user.id).maybeSingle();
+            if (!me || !me.is_active) { await supabaseClient.auth.signOut(); window.location.replace("index.html"); return; }
+            if (me.role !== "manager") { denyAccess(me); return; }
+            $("userName").textContent = me.full_name + " · ผู้จัดการ";
+            $("dFrom").value = $("dTo").value = dkey(Date.now());
+            setRange("today");
+        }
+
+        document.querySelectorAll(".range .chip").forEach(b => b.onclick = () => setRange(b.dataset.r));
+        $("dGo").onclick = () => { from = $("dFrom").value; to = $("dTo").value; load().catch(showErr); };
+        document.querySelectorAll("[data-s]").forEach(b => b.onclick = () => {
+            sortBy = b.dataset.s; document.querySelectorAll("[data-s]").forEach(x => x.classList.toggle("on", x === b)); renderTop();
+        });
+        $("search").oninput = () => { shown = 50; renderHistory(); };
+        $("statusFilter").onchange = () => { shown = 50; renderHistory(); };
+        $("moreBtn").onclick = () => { shown += 50; renderHistory(); };
+        $("logoutButton").onclick = async function () { this.disabled = true; await supabaseClient.auth.signOut(); window.location.replace("index.html"); };
+
+        const showErr = e => { console.error(e); $("message").innerHTML = '<div class="error">โหลดข้อมูลไม่สำเร็จ: ' + esc(e.message || e) + '</div>'; };
+        init().catch(showErr);
+    </script>
+</body>
+</html>

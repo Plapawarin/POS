@@ -1,0 +1,82 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Smart POS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="login-box">
+
+            <div class="logo">
+                <div class="logo-icon">S</div>
+                <h1>Smart POS</h1>
+                <p>ระบบจัดการร้านค้าอัจฉริยะ</p>
+            </div>
+
+            <div class="login-header">
+                <h2>เข้าสู่ระบบ</h2>
+                <p>กรุณากรอกรหัสพนักงานและรหัสผ่าน</p>
+            </div>
+
+            <form id="loginForm">
+
+                <div class="form-group">
+                    <label for="employee_code">รหัสพนักงาน</label>
+                    <input
+                        type="text"
+                        id="employee_code"
+                        placeholder="เช่น EMP001"
+                        autocomplete="username"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">รหัสผ่าน</label>
+
+                    <div class="password-wrapper">
+                        <input
+                            type="password"
+                            id="password"
+                            placeholder="กรอกรหัสผ่าน"
+                            autocomplete="current-password"
+                            required
+                        >
+
+                        <button
+                            type="button"
+                            id="togglePassword"
+                            class="toggle-password"
+                        >
+                            แสดง
+                        </button>
+                    </div>
+                </div>
+
+                <div id="errorMessage" class="error-message"></div>
+                <div id="successMessage" class="success-message"></div>
+
+                <button type="submit" id="loginButton" class="login-button">
+                    เข้าสู่ระบบ
+                </button>
+
+            </form>
+
+            <div class="login-footer">
+                <p>Smart POS Management System</p>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="app.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,435 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Analytics | Smart POS</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Tahoma, sans-serif;
+        }
+
+        body {
+            background: #f1f5f9;
+            color: #1e293b;
+            font-size: 14px;
+        }
+
+        .topbar {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            font-size: 17px;
+        }
+
+        .brand i {
+            width: 34px;
+            height: 34px;
+            background: #2563eb;
+            color: white;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            font-style: normal;
+        }
+
+        .nav {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .nav a {
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .nav a:hover {
+            background: #f1f5f9;
+            color: #2563eb;
+        }
+
+        .nav a.on {
+            background: #eff6ff;
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+        .user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #64748b;
+        }
+
+        .btn {
+            border: 1px solid #cbd5e1;
+            background: white;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #f1f5f9;
+        }
+
+        .wrap {
+            max-width: 1100px;
+            margin: auto;
+            padding: 24px 20px;
+        }
+
+        h1 {
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+
+        .grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .stats {
+            grid-template-columns: repeat(3, 1fr);
+            margin-bottom: 18px;
+        }
+
+        .two {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 18px;
+        }
+
+        .stat span {
+            color: #64748b;
+        }
+
+        .stat b {
+            display: block;
+            font-size: 28px;
+            margin-top: 10px;
+        }
+
+        h2 {
+            font-size: 16px;
+            margin-bottom: 14px;
+        }
+
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 18px;
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .status.success {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .status.error {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .status.warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .row:last-child {
+            border-bottom: 0;
+        }
+
+        .muted {
+            color: #64748b;
+        }
+
+        .empty {
+            text-align: center;
+            color: #94a3b8;
+            padding: 20px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 10px 8px;
+            border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap;
+        }
+
+        th {
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .refresh {
+            background: #2563eb;
+            color: white;
+            border: 0;
+            padding: 9px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .refresh:hover {
+            background: #1d4ed8;
+        }
+
+        .refresh:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        @media (max-width: 760px) {
+            .stats, .two {
+                grid-template-columns: 1fr;
+            }
+
+            .wrap {
+                padding: 15px;
+            }
+
+            .topbar {
+                align-items: flex-start;
+            }
+
+            .nav {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- แถบเมนูด้านบน -->
+    <div class="topbar">
+
+        <div class="brand">
+            <i>S</i>
+            Smart POS
+        </div>
+
+        <div class="nav">
+            <a href="dashboard.html">ภาพรวม</a>
+            <a href="pos.html">ขายสินค้า</a>
+            <a href="sales-history.html">ประวัติการขาย</a>
+            <a href="products.html">สินค้า</a>
+            <a href="stock.html">สต็อก</a>
+            <a href="reports.html">รายงาน</a>
+            <a href="users.html">ผู้ใช้งาน</a>
+            <a href="ai.html" class="on">วิเคราะห์ยอดขาย AI</a>
+        </div>
+
+        <div class="user">
+            <span id="userName">กำลังตรวจสอบ...</span>
+            <button class="btn" id="logoutButton">ออกจากระบบ</button>
+        </div>
+
+    </div>
+
+    <!-- เนื้อหาหน้า AI -->
+    <main class="wrap">
+
+        <h1>AI Sales Analytics</h1>
+
+        <p class="subtitle">
+            ระบบวิเคราะห์ข้อมูลและพยากรณ์ยอดขายอัจฉริยะ
+        </p>
+
+        <div id="message" class="status">
+            กำลังตรวจสอบสิทธิ์และเชื่อมต่อข้อมูล...
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; margin-bottom:15px;">
+            <button class="refresh" id="refreshButton" disabled>
+                รีเฟรชข้อมูล
+            </button>
+        </div>
+
+        <!-- สรุปจำนวนข้อมูล -->
+        <div class="grid stats">
+
+            <div class="card stat">
+                <span>รายการขายที่ดึงได้</span>
+                <b id="salesCount">-</b>
+            </div>
+
+            <div class="card stat">
+                <span>รายการสินค้าในบิลที่ดึงได้</span>
+                <b id="itemsCount">-</b>
+            </div>
+
+            <div class="card stat">
+                <span>จำนวนสินค้าในระบบที่ดึงได้</span>
+                <b id="productsCount">-</b>
+            </div>
+
+        </div>
+
+        <div class="grid two">
+
+            <!-- สถานะการเชื่อมต่อ -->
+            <div class="card">
+                <h2>สถานะการเชื่อมต่อ</h2>
+
+                <div class="row">
+                    <span>Login Session</span>
+                    <b id="sessionStatus">กำลังตรวจสอบ</b>
+                </div>
+
+                <div class="row">
+                    <span>สิทธิ์ผู้ใช้งาน</span>
+                    <b id="roleStatus">กำลังตรวจสอบ</b>
+                </div>
+
+                <div class="row">
+                    <span>Flask Backend</span>
+                    <b id="backendStatus">รอเชื่อมต่อ</b>
+                </div>
+
+                <div class="row">
+                    <span>Supabase</span>
+                    <b id="databaseStatus">รอเชื่อมต่อ</b>
+                </div>
+            </div>
+
+            <!-- สถานะตาราง -->
+            <div class="card">
+                <h2>ข้อมูลสำหรับการวิเคราะห์</h2>
+
+                <div class="row">
+                    <span>ตาราง sales</span>
+                    <b id="salesStatus">-</b>
+                </div>
+
+                <div class="row">
+                    <span>ตาราง sale_items</span>
+                    <b id="itemsStatus">-</b>
+                </div>
+
+                <div class="row">
+                    <span>ตาราง products</span>
+                    <b id="productsStatus">-</b>
+                </div>
+
+                <p class="muted" style="margin-top:12px;font-size:12px;">
+                    จำนวนที่แสดงเป็นจำนวนตัวอย่างจาก API ปัจจุบัน
+                    ซึ่งจำกัดการดึงไว้ไม่เกิน 5 แถวต่อตาราง
+                </p>
+            </div>
+
+            <!-- ตารางยอดขาย -->
+            <div class="card" style="grid-column:1/-1;">
+                <h2>ตัวอย่างข้อมูลการขาย</h2>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>เลขที่บิล</th>
+                                <th>ยอดขาย</th>
+                                <th>สถานะ</th>
+                                <th>วันที่</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="salesTable">
+                            <tr>
+                                <td colspan="4" class="empty">
+                                    กำลังโหลดข้อมูล...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ตารางสินค้า -->
+            <div class="card" style="grid-column:1/-1;">
+                <h2>สินค้าในระบบ</h2>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ชื่อสินค้า</th>
+                                <th>ราคาขาย</th>
+                                <th>จำนวนคงเหลือ</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="productsTable">
+                            <tr>
+                                <td colspan="3" class="empty">
+                                    กำลังโหลดข้อมูล...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- เรียกใช้งาน Supabase และ JavaScript เดิม -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="ai.js"></script>
+
+</body>
+</html>

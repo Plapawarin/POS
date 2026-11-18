@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จัดการสินค้า | Smart POS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, Tahoma, sans-serif; }
+        body { background: #f1f5f9; color: #1e293b; font-size: 14px; }
+
+        .topbar { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 17px; }
+        .brand i { width: 34px; height: 34px; background: #2563eb; color: #fff; border-radius: 10px; display: grid; place-items: center; font-style: normal; }
+        .nav { display: flex; gap: 4px; }
+        .nav a { padding: 8px 14px; border-radius: 8px; color: #64748b; text-decoration: none; font-size: 14px; }
+        .nav a.on { background: #eff6ff; color: #2563eb; font-weight: bold; }
+        .user { display: flex; align-items: center; gap: 12px; color: #64748b; font-size: 13px; }
+
+        .btn { border: 1px solid #cbd5e1; background: #fff; padding: 9px 14px; border-radius: 8px; cursor: pointer; font-size: 14px; color: #1e293b; }
+        .btn:hover { background: #f1f5f9; }
+        .btn.pri { background: #2563eb; color: #fff; border-color: #2563eb; font-weight: bold; }
+        .btn.pri:hover { background: #1d4ed8; }
+        .btn.del { color: #b91c1c; border-color: #fecaca; background: #fff; }
+        .btn.del:hover { background: #fee2e2; }
+        .btn.sm { padding: 6px 11px; font-size: 13px; }
+        .btn:disabled { opacity: .6; cursor: not-allowed; }
+
+        .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 10px; flex-wrap: wrap; }
+        h1 { font-size: 20px; }
+        h2 { font-size: 15px; margin-bottom: 12px; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+
+        label { display: block; font-size: 12px; color: #64748b; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fff; color: #1e293b; min-width: 0; }
+        input:focus, select:focus { outline: 2px solid #2563eb; border-color: transparent; }
+        .form { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 14px; }
+        .span2 { grid-column: span 2; }
+        .actions { display: flex; gap: 8px; }
+        .hint { color: #64748b; font-size: 12px; margin-top: 4px; }
+
+        .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+        .chip { border: 1px solid #cbd5e1; background: #fff; padding: 6px 14px; border-radius: 99px; cursor: pointer; font-size: 13px; display: inline-flex; gap: 8px; align-items: center; }
+        .chip.on { background: #2563eb; color: #fff; border-color: #2563eb; }
+        .chip a { color: #b91c1c; cursor: pointer; font-weight: bold; }
+        .addcat { display: flex; gap: 8px; max-width: 360px; }
+
+        .filters { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+        .filters input { flex: 1; min-width: 200px; }
+        .filters select { width: 200px; }
+
+        .tbl { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e2e8f0; }
+        th { color: #64748b; font-size: 12px; white-space: nowrap; }
+        td small { color: #64748b; }
+        .r { text-align: right; }
+        .badge { padding: 2px 10px; border-radius: 99px; font-size: 12px; background: #dcfce7; color: #15803d; white-space: nowrap; }
+        .badge.low { background: #fef3c7; color: #b45309; }
+        .badge.out { background: #fee2e2; color: #b91c1c; }
+        .empty { color: #94a3b8; text-align: center; padding: 22px 0; }
+        .error { background: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
+        #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #1e293b; color: #fff; padding: 10px 16px; border-radius: 8px; display: none; z-index: 9; }
+
+        @media (max-width: 760px) { .form { grid-template-columns: 1fr 1fr; } .span2 { grid-column: span 2; } .wrap { padding: 14px; } }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <div class="brand"><i>S</i>Smart POS</div>
+        <div class="nav"><a href="dashboard.html">ภาพรวม</a><a href="pos.html">ขายสินค้า</a><a href="sales-history.html">ประวัติการขาย</a><a href="products.html" class="on">สินค้า</a><a href="stock.html">สต็อก</a><a href="reports.html">รายงาน</a><a href="users.html">ผู้ใช้งาน</a></div>
+        <div class="user">
+            <span id="userName">กำลังโหลด...</span>
+            <button class="btn" id="logoutButton">ออกจากระบบ</button>
+        </div>
+    </div>
+
+    <div class="wrap">
+        <div id="message"></div>
+
+        <div class="head">
+            <h1>จัดการสินค้า</h1>
+            <button class="btn pri" id="newBtn">+ เพิ่มสินค้า</button>
+        </div>
+
+        <!-- ฟอร์มเพิ่ม/แก้ไข -->
+        <div class="card" id="formCard" hidden>
+            <h2 id="formTitle">เพิ่มสินค้า</h2>
+            <div class="form">
+                <div class="span2"><label>ชื่อสินค้า *</label><input id="fName"></div>
+                <div><label>หมวดหมู่</label><select id="fCat"></select></div>
+                <div><label>หน่วย</label><input id="fUnit" placeholder="ชิ้น"></div>
+                <div><label>ราคาขาย (บาท) *</label><input id="fPrice" type="number" min="0" step="0.01"></div>
+                <div><label>ต้นทุน (บาท)</label><input id="fCost" type="number" min="0" step="0.01"></div>
+                <div><label>บาร์โค้ด</label><input id="fBarcode"></div>
+                <div><label>SKU</label><input id="fSku" placeholder="เว้นว่าง = สร้างให้อัตโนมัติ"></div>
+                <div><label>แจ้งเตือนเมื่อเหลือไม่เกิน</label><input id="fMin" type="number" min="0" placeholder="10"></div>
+                <div id="stockBox"><label>สต็อกเริ่มต้น</label><input id="fStock" type="number" min="0" placeholder="0"></div>
+            </div>
+            <p class="hint" id="editHint" hidden>การเพิ่ม/ลดจำนวนสต็อกของสินค้าที่มีอยู่แล้ว ให้ทำที่หน้ารับสินค้าเข้า เพื่อให้มีประวัติ</p>
+            <div class="actions" style="margin-top:12px">
+                <button class="btn pri" id="saveBtn">บันทึก</button>
+                <button class="btn" id="cancelBtn">ยกเลิก</button>
+            </div>
+        </div>
+
+        <!-- หมวดหมู่ -->
+        <div class="card">
+            <h2>หมวดหมู่สินค้า</h2>
+            <div class="chips" id="catList"></div>
+            <div class="addcat"><input id="newCat" placeholder="ชื่อหมวดหมู่ใหม่"><button class="btn" id="addCatBtn">เพิ่ม</button></div>
+        </div>
+
+        <!-- รายการสินค้า -->
+        <div class="card">
+            <div class="filters">
+                <input id="search" placeholder="ค้นหาชื่อ / บาร์โค้ด / SKU">
+                <select id="catFilter"></select>
+            </div>
+            <div class="tbl">
+                <table>
+                    <thead><tr><th>สินค้า</th><th>หมวดหมู่</th><th class="r">ราคาขาย</th><th class="r">ต้นทุน</th><th class="r">คงเหลือ</th><th>สถานะ</th><th></th></tr></thead>
+                    <tbody id="tbody"><tr><td colspan="7" class="empty">กำลังโหลด...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div id="toast"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+
+    <script>
+        const $ = id => document.getElementById(id);
+        const baht = n => "฿" + Number(n || 0).toLocaleString("th-TH", { maximumFractionDigits: 2 });
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        function toast(m) { const t = $("toast"); t.textContent = m; t.style.display = "block"; clearTimeout(t.h); t.h = setTimeout(() => t.style.display = "none", 3500); }
+
+        let products = [], categories = [], editId = null;
+
+        function errText(e) {
+            if (e.code === "23505") return "บาร์โค้ดหรือ SKU นี้ถูกใช้แล้ว";
+            if (e.code === "42501") return "ไม่มีสิทธิ์แก้ไข (ต้องเป็นผู้จัดการ และรัน products_setup.sql แล้ว)";
+            return e.message || "เกิดข้อผิดพลาด";
+        }
+
+        // ---------- แสดงผล ----------
+        function renderCats() {
+            $("catList").innerHTML = categories.map(c =>
+                `<span class="chip">${esc(c.name)} <a data-id="${c.id}" title="ลบหมวดหมู่">✕</a></span>`).join("")
+                || '<span class="hint">ยังไม่มีหมวดหมู่</span>';
+            $("catList").querySelectorAll("a").forEach(a => a.onclick = () => deleteCategory(a.dataset.id));
+
+            const opts = categories.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+            const keepF = $("catFilter").value, keepC = $("fCat").value;
+            $("catFilter").innerHTML = '<option value="">ทุกหมวดหมู่</option>' + opts;
+            $("fCat").innerHTML = '<option value="">ไม่ระบุ</option>' + opts;
+            $("catFilter").value = keepF; $("fCat").value = keepC;
+        }
+
+        function renderTable() {
+            const q = $("search").value.trim().toLowerCase(), cf = $("catFilter").value;
+            const name = id => categories.find(c => c.id === id)?.name || "-";
+            const list = products.filter(p => (!cf || p.category_id === cf) &&
+                (p.name + " " + (p.barcode || "") + " " + (p.sku || "")).toLowerCase().includes(q));
+            $("tbody").innerHTML = list.map(p => {
+                const s = Number(p.stock_quantity), out = s <= 0, low = s <= Number(p.min_stock_level);
+                return `<tr><td>${esc(p.name)}<br><small>${esc(p.barcode || p.sku || "-")}</small></td>
+                    <td>${esc(name(p.category_id))}</td>
+                    <td class="r">${baht(p.selling_price)}</td><td class="r">${baht(p.cost_price)}</td>
+                    <td class="r">${s} ${esc(p.unit || "")}</td>
+                    <td><span class="badge ${out ? "out" : low ? "low" : ""}">${out ? "หมด" : low ? "ใกล้หมด" : "ปกติ"}</span></td>
+                    <td style="white-space:nowrap"><button class="btn sm" data-e="${p.id}">แก้ไข</button> <button class="btn sm del" data-x="${p.id}">ลบ</button></td></tr>`;
+            }).join("") || '<tr><td colspan="7" class="empty">ไม่พบสินค้า</td></tr>';
+            $("tbody").querySelectorAll("[data-e]").forEach(b => b.onclick = () => openForm(b.dataset.e));
+            $("tbody").querySelectorAll("[data-x]").forEach(b => b.onclick = () => deleteProduct(b.dataset.x));
+        }
+
+        // ---------- ฟอร์ม ----------
+        function openForm(id) {
+            editId = id || null;
+            const p = id ? products.find(x => x.id === id) : null;
+            $("formTitle").textContent = p ? "แก้ไขสินค้า" : "เพิ่มสินค้า";
+            $("fName").value = p?.name || ""; $("fCat").value = p?.category_id || "";
+            $("fUnit").value = p?.unit || ""; $("fPrice").value = p?.selling_price ?? "";
+            $("fCost").value = p?.cost_price ?? ""; $("fBarcode").value = p?.barcode || "";
+            $("fSku").value = p?.sku || ""; $("fMin").value = p?.min_stock_level ?? ""; $("fStock").value = "";
+            $("stockBox").hidden = !!p; $("editHint").hidden = !p;
+            $("formCard").hidden = false; $("fName").focus();
+            $("formCard").scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+        function closeForm() { $("formCard").hidden = true; editId = null; }
+
+        async function save() {
+            const name = $("fName").value.trim(), price = $("fPrice").value;
+            if (!name) return toast("กรุณากรอกชื่อสินค้า");
+            if (price === "" || Number(price) < 0) return toast("กรุณากรอกราคาขายให้ถูกต้อง");
+            const barcode = $("fBarcode").value.trim() || null;
+            const row = {
+                name, category_id: $("fCat").value || null, barcode,
+                selling_price: Number(price), cost_price: Number($("fCost").value) || 0,
+                unit: $("fUnit").value.trim() || "ชิ้น", min_stock_level: $("fMin").value === "" ? 10 : Number($("fMin").value),
+                updated_at: new Date().toISOString()
+            };
+            $("saveBtn").disabled = true;
+            try {
+                if (editId) {
+                    row.sku = $("fSku").value.trim() || products.find(p => p.id === editId).sku;
+                    const { error } = await supabaseClient.from("products").update(row).eq("id", editId);
+                    if (error) throw error;
+                } else {
+                    row.sku = $("fSku").value.trim() || barcode || "SKU" + Date.now();
+                    row.stock_quantity = 0; row.is_active = true;
+                    const { data, error } = await supabaseClient.from("products").insert(row).select("id").single();
+                    if (error) throw error;
+                    const qty = Number($("fStock").value) || 0;
+                    if (qty > 0) {
+                        const r = await supabaseClient.rpc("receive_stock", { p_product: data.id, p_qty: qty, p_note: "สต็อกเริ่มต้น" });
+                        if (r.error) toast("เพิ่มสินค้าแล้ว แต่ใส่สต็อกเริ่มต้นไม่สำเร็จ: " + r.error.message);
+                    }
+                }
+                toast("บันทึกแล้ว"); closeForm(); await load();
+            } catch (e) { toast(errText(e)); }
+            $("saveBtn").disabled = false;
+        }
+
+        async function deleteProduct(id) {
+            const p = products.find(x => x.id === id);
+            if (!confirm(`ลบสินค้า "${p.name}" ?\n(ประวัติการขายเดิมยังอยู่ครบ)`)) return;
+            const { error } = await supabaseClient.from("products").update({ is_active: false, updated_at: new Date().toISOString() }).eq("id", id);
+            if (error) return toast(errText(error));
+            toast("ลบแล้ว"); load();
+        }
+
+        // ---------- หมวดหมู่ ----------
+        async function addCategory() {
+            const name = $("newCat").value.trim(); if (!name) return;
+            const { error } = await supabaseClient.from("categories").insert({ name, is_active: true });
+            if (error) return toast(errText(error));
+            $("newCat").value = ""; load();
+        }
+        async function deleteCategory(id) {
+            const used = products.filter(p => p.category_id === id).length;
+            if (!confirm(used ? `มีสินค้า ${used} รายการในหมวดนี้ จะถูกย้ายเป็น "ไม่ระบุ" ลบหมวดหมู่นี้?` : "ลบหมวดหมู่นี้?")) return;
+            if (used) {
+                const r = await supabaseClient.from("products").update({ category_id: null }).eq("category_id", id);
+                if (r.error) return toast(errText(r.error));
+            }
+            const { error } = await supabaseClient.from("categories").update({ is_active: false }).eq("id", id);
+            if (error) return toast(errText(error));
+            load();
+        }
+
+        // ---------- โหลดข้อมูล ----------
+        async function load() {
+            const [p, c] = await Promise.all([
+                supabaseClient.from("products").select("*").eq("is_active", true).order("name"),
+                supabaseClient.from("categories").select("id, name").eq("is_active", true).order("name")
+            ]);
+            if (p.error || c.error) throw (p.error || c.error);
+            products = p.data; categories = c.data;
+            renderCats(); renderTable();
+        }
+
+        // พนักงานขายเข้าหน้านี้ไม่ได้: แสดงข้อความแจ้งแทนการเด้งกลับเงียบๆ
+        function denyAccess(me) {
+            document.getElementById("userName").textContent = me.full_name + " · " + (me.role === "manager" ? "ผู้จัดการ" : "พนักงานขาย");
+            document.querySelectorAll(".nav a").forEach(a => { if (/products|stock|reports|users/.test(a.getAttribute("href"))) a.style.display = "none"; });
+            document.querySelector(".wrap").innerHTML = `<div class="card" style="text-align:center;padding:40px 20px">
+                <div style="font-size:42px">🔒</div>
+                <h2 style="margin:12px 0 6px;font-size:18px">ไม่มีสิทธิ์เข้าถึงหน้านี้</h2>
+                <p style="color:#64748b;margin-bottom:18px">หน้านี้เข้าถึงได้เฉพาะผู้จัดการเท่านั้น</p>
+                <a class="btn pri" href="pos.html" style="text-decoration:none;display:inline-block">กลับไปหน้าขายสินค้า</a></div>`;
+        }
+
+        async function init() {
+            const { data: auth } = await supabaseClient.auth.getUser();
+            if (!auth.user) { window.location.replace("index.html"); return; }
+            const { data: me } = await supabaseClient.from("profiles").select("full_name, role, is_active")
+                .eq("auth_user_id", auth.user.id).maybeSingle();
+            if (!me || !me.is_active) { await supabaseClient.auth.signOut(); window.location.replace("index.html"); return; }
+            if (me.role !== "manager") { denyAccess(me); return; }
+            $("userName").textContent = me.full_name + " · ผู้จัดการ";
+            await load();
+        }
+
+        $("newBtn").onclick = () => openForm(null);
+        $("cancelBtn").onclick = closeForm;
+        $("saveBtn").onclick = save;
+        $("addCatBtn").onclick = addCategory;
+        $("newCat").onkeydown = e => { if (e.key === "Enter") addCategory(); };
+        $("search").oninput = renderTable;
+        $("catFilter").onchange = renderTable;
+        $("logoutButton").onclick = async function () { this.disabled = true; await supabaseClient.auth.signOut(); window.location.replace("index.html"); };
+
+        init().catch(e => { console.error(e); $("message").innerHTML = '<div class="error">โหลดข้อมูลไม่สำเร็จ: ' + esc(e.message || e) + '</div>'; });
+    </script>
+</body>
+</html>
